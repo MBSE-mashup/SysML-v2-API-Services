@@ -1,0 +1,28 @@
+version: '3.8'
+services:
+  postgresql:
+    image: postgres:13
+    environment:
+      POSTGRES_DB: sysml
+      POSTGRES_USER: sysml
+      POSTGRES_PASSWORD: sysml_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  sysml-api:
+    build: .
+    ports:
+      - "9000:9000"
+    environment:
+      DB_HOST: postgresql
+      DB_NAME: sysml
+      DB_USER: sysml
+      DB_PASSWORD: sysml_password
+      CONNECTION_POOL_SIZE: 5
+    depends_on:
+      - postgresql
+
+volumes:
+  postgres_data:
