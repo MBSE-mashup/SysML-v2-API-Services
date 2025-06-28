@@ -1,4 +1,4 @@
-FROM sbtscala/scala-sbt:graalvm-community-22.0.1_1.10.9_3.3.5
+FROM sbtscala/scala-sbt:TAGTOBEDEFINED
 
 # found Dockerfile at https://github.com/Systems-Modeling/SysML-v2-API-Services/issues/115
 # according to docker hub docu of sbtscala/scala-sbt the images are tagged according to
@@ -8,7 +8,7 @@ RUN java --version
 RUN sbt --version
 RUN scala -version
 
-RUN echo "SUCCESS_ToolsAvailable TAG: graalvm-community-22.0.1_1.10.9_3.3.5"
+RUN echo "SUCCESS_ToolsAvailable TAG: TAGTOBEDEFINED"
 
 WORKDIR /app
 COPY ./ /app
@@ -17,7 +17,7 @@ RUN java --version
 RUN sbt --version
 RUN scala -version
 
-RUN echo "SUCCESS_AppSourcesCopied TAG: graalvm-community-22.0.1_1.10.9_3.3.5"
+RUN echo "SUCCESS_AppSourcesCopied TAG: TAGTOBEDEFINED"
 
 # Warm up sbt and download dependencies
 RUN sbt update
@@ -26,16 +26,16 @@ RUN java --version
 RUN sbt --version
 RUN scala -version
 
-RUN echo "SUCCESS_SBTupdated TAG: graalvm-community-22.0.1_1.10.9_3.3.5"
+RUN echo "SUCCESS_SBTupdated TAG: TAGTOBEDEFINED"
 
 RUN sbt -v clean compile
 
-RUN echo "SUCCESS_ApplicationCompiled TAG: graalvm-community-22.0.1_1.10.9_3.3.5"
+RUN echo "SUCCESS_ApplicationCompiled TAG: TAGTOBEDEFINED"
 
 # Create distribution
 RUN sbt dist
 
-RUN echo "SUCCESS_DistBuilt TAG: graalvm-community-22.0.1_1.10.9_3.3.5"
+RUN echo "SUCCESS_DistBuilt TAG: TAGTOBEDEFINED"
 
 # RUN sbt -v evicted
 EXPOSE  9000
