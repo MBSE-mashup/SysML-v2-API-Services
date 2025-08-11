@@ -1,42 +1,46 @@
-FROM sbtscala/scala-sbt:graalvm-community-22.0.1_1.10.9_3.3.5
+ARG BASEIMAGETAG=openjdk-11.0.16_1.7.2_2.13.9
+FROM sbtscala/scala-sbt:$BASEIMAGETAG AS builder
+ARG BASEIMAGETAG
 
-# found Dockerfile at https://github.com/Systems-Modeling/SysML-v2-API-Services/issues/115
+# found Dockerfile inspiration at https://github.com/Systems-Modeling/SysML-v2-API-Services/issues/115
 # according to docker hub docu of sbtscala/scala-sbt the images are tagged according to
 # versions like: <JDK version>_<sbt version>_<Scala version>
 
-RUN java --version
-RUN sbt --version
-RUN scala -version
-
-RUN echo "SUCCESS_ToolsAvailable TAG: graalvm-community-22.0.1_1.10.9_3.3.5"
+RUN java --version && sbt --version && scala -version
 
 WORKDIR /app
-COPY ./ /app
 
-RUN java --version
-RUN sbt --version
-RUN scala -version
-
-RUN echo "SUCCESS_AppSourcesCopied TAG: graalvm-community-22.0.1_1.10.9_3.3.5"
-
-# Warm up sbt and download dependencies
+COPY build.sbt /app/
+COPY project /app/project
 RUN sbt update
 
-RUN java --version
-RUN sbt --version
-RUN scala -version
+COPY app /app/app
+COPY conf /app/conf
+COPY generated /app/generated
+COPY public /app/public
+COPY test /app/test
 
-RUN echo "SUCCESS_SBTupdated TAG: graalvm-community-22.0.1_1.10.9_3.3.5"
+RUN sbt update
 
-RUN sbt -v clean compile
+RUN sbt -v clean
 
-RUN echo "SUCCESS_ApplicationCompiled TAG: graalvm-community-22.0.1_1.10.9_3.3.5"
+# RUN sbt -v compile
+# explicitly set memory available to jvm and avoid parallel compilation to make
+# the build process inside the container more robust.
+RUN sbt -J-Xmx1G -Dsbt.parallelExecution=false -v compile
 
 # Create distribution
-RUN sbt dist
+RUN sbt -J-Xmx1G -Dsbt.parallelExecution=false dist
 
-RUN echo "SUCCESS_DistBuilt TAG: graalvm-community-22.0.1_1.10.9_3.3.5"
+#  --- Runtime stage ---
+FROM openjdk:11-jre-slim
+# we could also use the same baseimage as for building
+# FROM sbtscala/scala-sbt:$BASEIMAGETAG
 
-# RUN sbt -v evicted
-EXPOSE  9000
-CMD ["sbt", "-v", "run"]
+WORKDIR /app
+# Copy and extract the distribution from the builder stage
+COPY --from=builder /app/target/universal/*.zip /app/
+RUN apt-get update && apt-get install -y unzip
+RUN unzip /app/sysml-*.zip -d /app && mv /app/sysml-v2-api-services*/ /app/sysml-v2-api-services && rm /app/sysml-*.zip
+
+CMD ["/app/sysml-v2-api-services/bin/sysml-v2-api-services"]
