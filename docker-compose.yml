@@ -10,6 +10,11 @@ services:
       - "5432:5432"
     volumes:
       - postgresdbvol:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     networks:
       - thenetwork
   sysmlapiserver:
@@ -20,9 +25,13 @@ services:
       - JDBC_PASSWORD=mysecretpassword
       - JDBC_URL=jdbc:postgresql://postgresdbserver:5432/sysml2
       - HIBERNATE_SHOW_SQL=false
+      - HIBERNATE_HBM2DDL=update
     ports:
       - "9000:9000"
     restart: always
+    depends_on:
+      postgresdbserver:
+        condition: service_healthy
     networks:
       - thenetwork
 networks:
