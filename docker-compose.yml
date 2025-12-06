@@ -1,6 +1,6 @@
 services:
   postgresdbserver:
-    image: postgres:9.6.6
+    image: postgres:15
     restart: always
     environment:
       - POSTGRES_USER=postgres
@@ -9,7 +9,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - postgresdbvol:/var/lib/postgresql/data
+      - postgresdbvol:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
@@ -21,11 +21,17 @@ services:
     image: mbse-mashup-local-sysmlv2api
     tty: false
     environment:
+      - HIBERNATE_SHOW_SQL=false
+      # - HIBERNATE_HBM2DDL=none
+      - HIBERNATE_HBM2DDL=update
+      # - HIBERNATE_HBM2DDL=create-drop
+      # ------- POSTGRES ------
+      - JDBC_DRIVER=org.postgresql.Driver
+      - HIBERNATE_DIALECT=org.hibernate.dialect.PostgreSQLDialect
+      - JDBC_URL=jdbc:postgresql://postgresdbserver:5432/sysml2
       - JDBC_USER=postgres
       - JDBC_PASSWORD=mysecretpassword
-      - JDBC_URL=jdbc:postgresql://postgresdbserver:5432/sysml2
-      - HIBERNATE_SHOW_SQL=false
-      - HIBERNATE_HBM2DDL=update
+      # - ALLOWED_HOSTS=0.0.0.0:9000
     ports:
       - "9000:9000"
     restart: always
