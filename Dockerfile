@@ -33,7 +33,7 @@ RUN sbt -J-Xmx1G -Dsbt.parallelExecution=false -v compile
 RUN sbt -J-Xmx1G -Dsbt.parallelExecution=false dist
 
 #  --- Runtime stage ---
-FROM openjdk:11-jre-slim
+FROM openjdk:11.0.16-jre-slim
 # we could also use the same baseimage as for building
 # FROM sbtscala/scala-sbt:$BASEIMAGETAG
 
