@@ -33,5 +33,5 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/sysml-v2-api-services:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/sysml-v2-api-services:${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/sysmlv2-api.pilotimpl:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/sysmlv2-api.pilotimpl:${{ github.sha }}
