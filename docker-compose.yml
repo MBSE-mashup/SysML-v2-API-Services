@@ -18,7 +18,9 @@ services:
     networks:
       - thenetwork
   sysmlapiserver:
-    image: mbse-mashup-local-sysmlv2api
+    # image: mbse-mashup-local-sysmlv2api
+    image: mbsemashup/sysmlv2-api.pilotimpl:latest
+    platform: linux/amd64
     tty: false
     environment:
       - HIBERNATE_SHOW_SQL=false
