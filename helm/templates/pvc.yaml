@@ -1,0 +1,17 @@
+{{- if .Values.database.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "sysml-v2-api-services.fullname" . }}-pvc
+  labels:
+    {{- include "sysml-v2-api-services.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.database.persistence.size }}
+  {{- if .Values.database.persistence.storageClassName }}
+  storageClassName: {{ .Values.database.persistence.storageClassName }}
+  {{- end }}
+{{- end }}

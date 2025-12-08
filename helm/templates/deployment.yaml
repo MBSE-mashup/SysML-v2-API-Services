@@ -1,0 +1,149 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "sysml-v2-api-services.fullname" . }}-db
+  labels:
+    {{- include "sysml-v2-api-services.labels" . | nindent 4 }}
+    app.kubernetes.io/component: database
+spec:
+  replicas: {{ .Values.database.replicaCount | default 1 }}
+  selector:
+    matchLabels:
+      {{- include "sysml-v2-api-services.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: database
+  template:
+    metadata:
+      labels:
+        {{- include "sysml-v2-api-services.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: database
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: postgres
+          image: "{{ .Values.database.image.repository }}:{{ .Values.database.image.tag }}"
+          imagePullPolicy: {{ .Values.database.image.pullPolicy }}
+          ports:
+            - name: postgres
+              containerPort: 5432
+              protocol: TCP
+          env:
+            - name: POSTGRES_DB
+              value: "{{ .Values.database.name }}"
+            - name: POSTGRES_USER
+              value: "{{ .Values.database.user }}"
+            - name: POSTGRES_PASSWORD
+              value: "{{ .Values.database.password }}"
+          volumeMounts:
+            - name: postgres-storage
+              mountPath: /var/lib/postgresql
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - pg_isready -U {{ .Values.database.user }}
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - pg_isready -U {{ .Values.database.user }}
+            initialDelaySeconds: 5
+            periodSeconds: 10
+      volumes:
+        - name: postgres-storage
+          {{- if .Values.database.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ include "sysml-v2-api-services.fullname" . }}-pvc
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "sysml-v2-api-services.fullname" . }}
+  labels:
+    {{- include "sysml-v2-api-services.labels" . | nindent 4 }}
+    app.kubernetes.io/component: app
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "sysml-v2-api-services.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: app
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "sysml-v2-api-services.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: app
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "sysml-v2-api-services.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.app.image.repository }}:{{ .Values.app.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.app.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.app.service.port }}
+              protocol: TCP
+          env:
+            - name: JDBC_DRIVER
+              value: "org.postgresql.Driver"
+            - name: HIBERNATE_DIALECT
+              value: "org.hibernate.dialect.PostgreSQLDialect"
+            - name: JDBC_URL
+              value: "jdbc:postgresql://{{ include "sysml-v2-api-services.fullname" . }}-db:5432/{{ .Values.database.name }}"
+            - name: JDBC_USER
+              value: "{{ .Values.database.user }}"
+            - name: JDBC_PASSWORD
+              value: "{{ .Values.database.password }}"
+            - name: HIBERNATE_SHOW_SQL
+              value: "{{ .Values.app.env.hibernateShowSql }}"
+            - name: HIBERNATE_HBM2DDL
+              value: "{{ .Values.app.env.hibernateHbm2ddl }}"
+            - name: ALLOWED_HOSTS
+              value: "{{ .Values.app.env.allowedHosts }}"
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 5
+          resources:
+            {{- toYaml .Values.app.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
