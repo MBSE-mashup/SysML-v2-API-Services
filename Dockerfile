@@ -44,6 +44,7 @@ RUN apt-get update && apt-get install -y unzip
 RUN unzip /app/sysml-*.zip -d /app && mv /app/sysml-v2-api-services*/ /app/sysml-v2-api-services && rm /app/sysml-*.zip
 
 RUN chmod g+rw /app/sysml-v2-api-services/conf/META-INF/persistence.xml
+RUN chmod g+rw -R /app/sysml-v2-api-services
 
 # xmlstarlet is used by the entrypoint script to configure the service at
 # launch-time, based on environment variables 
