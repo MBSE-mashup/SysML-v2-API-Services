@@ -43,6 +43,8 @@ COPY --from=builder /app/target/universal/*.zip /app/
 RUN apt-get update && apt-get install -y unzip
 RUN unzip /app/sysml-*.zip -d /app && mv /app/sysml-v2-api-services*/ /app/sysml-v2-api-services && rm /app/sysml-*.zip
 
+RUN chmod g+rw /app/sysml-v2-api-services/conf/META-INF/persistence.xml
+
 # xmlstarlet is used by the entrypoint script to configure the service at
 # launch-time, based on environment variables 
 RUN apt-get --quiet --yes update &&  apt-get install -yqq wget xmlstarlet
